@@ -21,7 +21,7 @@ void string_test()
 	printf("|%15.s|\n", NULL);
 
 	char *str = NULL;
-	ft_printf("|%15.3s|\n", str); //invalid case
+	ft_printf("|%15.3s|\n", str); //invalid on linux
 	printf("|%15.3s|\n", str);
 }
 
@@ -50,6 +50,12 @@ void digit_test()
 	
 	ft_printf("|%15.d|\n", 0);
 	printf("|%15.d|\n", 0);
+
+	ft_printf("|%15.0d|\n", 0);
+	printf("|%15.0d|\n", 0);
+
+	ft_printf("|%0.0d|\n", 0);
+	printf("|%0.0d|\n", 0);
 }
 
 void hex_test()
@@ -82,12 +88,10 @@ void hex_test()
 int main(void)
 {
 	//STRING
-
 	printf("############# STRING ###############\n");
 	string_test();	
 
 	//DIGITAL
-
 	printf("############# DIG ###############\n");
 	digit_test();
 	

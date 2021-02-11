@@ -6,7 +6,7 @@
 /*   By: mhufflep <mhufflep@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/07 04:12:40 by mhufflep          #+#    #+#             */
-/*   Updated: 2021/02/11 13:58:04 by mhufflep         ###   ########.fr       */
+/*   Updated: 2021/02/11 18:40:04 by mhufflep         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,6 +77,34 @@ int		ft_strlen(char *str)
 	return (i);
 }
 
+int		ft_numlen(long long number, int base)
+{
+	int count;
+
+	count = 0;
+	while (number != 0)
+	{
+		number /= base;
+		count++;
+	}
+	return (count);
+}
+
+int		ft_itoa_base(unsigned long long num, unsigned int base)
+{
+	if (num / base != 0)
+	{
+		ft_itoa_base(num / base, base);
+	}
+	ft_putchar(num % base > 9 ? (num % base) - 10 + 'a' : (num % base) + '0');
+	return (0);
+}
+
+int		get_pos_or_zero(long long num)
+{
+	return (num < 0 ? 0 : num);
+}
+
 int		get_parameters(const char *s, int *index, t_prm *prm)
 {
 	int i;
@@ -111,82 +139,43 @@ int		get_arguments(t_prm *prm, va_list ap)
 			prm->s_value = "(null)";
 	}
 	else
-		write(1, "ARGS ERROR!\n", 12);
-	return(0);
-}
-
-int		ft_numlen(long long num, int base)
-{
-	long long number;
-	int count;
-
-	number = num;
-	count = 0;
-	while (number != 0)
-	{
-		number /= base;
-		count++;
-	}
-	return (count);
-}
-
-int		ft_itoa_base(unsigned long long num, unsigned int base)
-{
-	if (num / base != 0)
-	{
-		ft_itoa_base(num / base, base);
-	}
-	ft_putchar(num % base > 9 ? (num % base) - 10 + 'a' : (num % base) + '0');
+		return (-1);
 	return (0);
 }
 
-int		get_pos_or_zero(long long num)
-{
-	return (num < 0 ? 0 : num);
-}
-
-int		print_spaces(t_prm *prm)
+int		calculate_print_params(t_prm *prm)
 {
 	if (prm->type == 'd')
 		prm->arg_len = ft_numlen(prm->i_value, 10);
 	else if (prm->type == 'x')
 		prm->arg_len = ft_numlen(prm->h_value, 16);
-	else if (prm->type = 's')
+	else if (prm->type == 's')
 		prm->arg_len = prm->prec_exist ? prm->prec : ft_strlen(prm->s_value);
 	
-	if (prm->prec_exist) // && prm->prec - prm->arg_len > 0)
-		//prm->zeros = prm->prec - prm->arg_len;
+	if (prm->prec_exist)
 		prm->zeros = get_pos_or_zero(prm->prec - prm->arg_len);
 	
 	prm->spaces = get_pos_or_zero(prm->width - prm->arg_len - prm->zeros - (prm->i_value < 0));
-	//prm->spaces = prm->width - prm->arg_len - prm->zeros - (prm->i_value < 0);
-	
-	//printf("sp:%d\n",prm->spaces);
-	//printf("len:%d\n",prm->arg_len);
-	//printf("zero:%d\n",prm->zeros);
-	//printf("hex:%u\n",prm->h_value);
-	//printf("ex:%d prec:%d\n",prm->prec_exist, prm->prec);
+	return (0);
+}
 
-	//if (prm->spaces < 0)
-	//	prm->spaces = 0;
-
+int		print_spaces(t_prm *prm)
+{
+	calculate_print_params(prm);
 	while (prm->spaces--)
 		ft_putchar(' ');
-
 	if (prm->i_value < 0)
 	{
 		ft_putchar('-');
 		prm->i_value *= -1;
 	}
-
 	while (prm->type != 's' && prm->zeros--)
-		ft_putchar('0');
+		ft_putchar('0');	
+	return (0);
 }
 
 int		print_values(t_prm *prm)
 {
-	//int len;
-	
 	print_spaces(prm);
 	if (prm->type == 'd')
 	{
@@ -200,11 +189,10 @@ int		print_values(t_prm *prm)
 	}
 	else if (prm->type == 's')
 	{
-		//len = prm->prec_exist ? prm->prec : ft_strlen(prm->s_value);
 		ft_putstrn(prm->s_value, prm->arg_len);
 	}
 	else
-		write(1, "PRINT ERROR!\n", 13);
+		return (-1);
 	return (0);
 }
 
@@ -227,9 +215,12 @@ int		ft_printf(const char *format, ... )
 			ft_putstrn(&format[start], i - start);
 			set_defaults(&prm);
 			i++;
-			get_parameters(&format[i], &i, &prm);
-			get_arguments(&prm, ap);
-			print_values(&prm);
+			if (get_parameters(&format[i], &i, &prm))
+				return (-1);
+			if (get_arguments(&prm, ap))
+				return (-1);
+			if (print_values(&prm))
+				return (-1);
 			start = i;
 		}
 		i++;
