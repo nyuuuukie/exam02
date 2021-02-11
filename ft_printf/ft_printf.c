@@ -6,7 +6,7 @@
 /*   By: mhufflep <mhufflep@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/02/07 04:12:40 by mhufflep          #+#    #+#             */
-/*   Updated: 2021/02/07 20:39:20 by mhufflep         ###   ########.fr       */
+/*   Updated: 2021/02/11 13:58:04 by mhufflep         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,20 +16,20 @@
 
 int g_len = 0;
 
-typedef struct	s_prm
+typedef struct		s_prm
 {
-	int			prec;
-	char		type;
-	int			width;
-	long long	i_value;
-	unsigned int h_value;
-	char*		s_value;
-	int			prec_exist;
+	int				prec;
+	char			type;
+	int				width;
+	long long		i_value;
+	unsigned int	h_value;
+	char*			s_value;
+	int				prec_exist;
 
-	int			arg_len;
-	int			spaces;
-	int			zeros;
-} 				t_prm;
+	int				arg_len;
+	int				spaces;
+	int				zeros;
+} 					t_prm;
 
 void	set_defaults(t_prm *prm)
 {
@@ -45,7 +45,7 @@ void	set_defaults(t_prm *prm)
 	prm->arg_len = 0;
 }
 
-int ft_atoi(const char *s, int *res)
+int		ft_atoi(const char *s, int *res)
 {
 	int i;
 
@@ -54,44 +54,6 @@ int ft_atoi(const char *s, int *res)
 	while (s[i] >= '0' && s[i] <= '9')
 		*res = *res * 10 + (s[i++] - '0');
 	return (i);
-}
-
-int get_parameters(const char *s, int *index, t_prm *prm)
-{
-	int i;
-
-	i = 0;
-	i += ft_atoi(&s[0], &prm->width);
-	if (s[i] == '.' && i++)
-	{
-		i += ft_atoi(&s[i], &prm->prec);
-		prm->prec_exist = 1;
-	}
-	prm->type = s[i];
-	*index += i + 1;
-
-	return (0);
-}
-
-int	get_arguments(t_prm *prm, va_list ap)
-{
-	if (prm->type == 'd')
-	{
-		prm->i_value = va_arg(ap, int);
-	}
-	else if (prm->type == 'x')
-	{
-		prm->h_value = (unsigned int)va_arg(ap, int);
-	}
-	else if (prm->type == 's')
-	{
-		prm->s_value = va_arg(ap, char *);
-		if (!prm->s_value)
-			prm->s_value = "(null)";
-	}
-	else
-		write(1, "ARGS ERROR!\n", 12);
-	return(0);
 }
 
 void	ft_putstrn(const char *str, int len)
@@ -113,6 +75,44 @@ int		ft_strlen(char *str)
 	while (str && str[i])
 		i++;
 	return (i);
+}
+
+int		get_parameters(const char *s, int *index, t_prm *prm)
+{
+	int i;
+
+	i = 0;
+	i += ft_atoi(&s[0], &prm->width);
+	if (s[i] == '.' && i++)
+	{
+		i += ft_atoi(&s[i], &prm->prec);
+		prm->prec_exist = 1;
+	}
+	prm->type = s[i];
+	*index += i + 1;
+
+	return (0);
+}
+
+int		get_arguments(t_prm *prm, va_list ap)
+{
+	if (prm->type == 'd')
+	{
+		prm->i_value = va_arg(ap, int);
+	}
+	else if (prm->type == 'x')
+	{
+		prm->h_value = (unsigned int)va_arg(ap, int);
+	}
+	else if (prm->type == 's')
+	{
+		prm->s_value = va_arg(ap, char *);
+		if (!prm->s_value)
+			prm->s_value = "(null)";
+	}
+	else
+		write(1, "ARGS ERROR!\n", 12);
+	return(0);
 }
 
 int		ft_numlen(long long num, int base)
@@ -140,6 +140,11 @@ int		ft_itoa_base(unsigned long long num, unsigned int base)
 	return (0);
 }
 
+int		get_pos_or_zero(long long num)
+{
+	return (num < 0 ? 0 : num);
+}
+
 int		print_spaces(t_prm *prm)
 {
 	if (prm->type == 'd')
@@ -149,10 +154,12 @@ int		print_spaces(t_prm *prm)
 	else if (prm->type = 's')
 		prm->arg_len = prm->prec_exist ? prm->prec : ft_strlen(prm->s_value);
 	
-	if (prm->prec_exist && prm->prec - prm->arg_len > 0)
-		prm->zeros = prm->prec - prm->arg_len;
+	if (prm->prec_exist) // && prm->prec - prm->arg_len > 0)
+		//prm->zeros = prm->prec - prm->arg_len;
+		prm->zeros = get_pos_or_zero(prm->prec - prm->arg_len);
 	
-	prm->spaces = prm->width - prm->arg_len - prm->zeros - (prm->i_value < 0);
+	prm->spaces = get_pos_or_zero(prm->width - prm->arg_len - prm->zeros - (prm->i_value < 0));
+	//prm->spaces = prm->width - prm->arg_len - prm->zeros - (prm->i_value < 0);
 	
 	//printf("sp:%d\n",prm->spaces);
 	//printf("len:%d\n",prm->arg_len);
@@ -160,8 +167,8 @@ int		print_spaces(t_prm *prm)
 	//printf("hex:%u\n",prm->h_value);
 	//printf("ex:%d prec:%d\n",prm->prec_exist, prm->prec);
 
-	if (prm->spaces < 0)
-		prm->spaces = 0;
+	//if (prm->spaces < 0)
+	//	prm->spaces = 0;
 
 	while (prm->spaces--)
 		ft_putchar(' ');
@@ -176,9 +183,9 @@ int		print_spaces(t_prm *prm)
 		ft_putchar('0');
 }
 
-int print_values(t_prm *prm)
+int		print_values(t_prm *prm)
 {
-	int len;
+	//int len;
 	
 	print_spaces(prm);
 	if (prm->type == 'd')
@@ -193,16 +200,15 @@ int print_values(t_prm *prm)
 	}
 	else if (prm->type == 's')
 	{
-		len = prm->prec_exist ? prm->prec : ft_strlen(prm->s_value);
-		ft_putstrn(prm->s_value, len);
+		//len = prm->prec_exist ? prm->prec : ft_strlen(prm->s_value);
+		ft_putstrn(prm->s_value, prm->arg_len);
 	}
 	else
 		write(1, "PRINT ERROR!\n", 13);
 	return (0);
 }
 
-
-int ft_printf(const char *format, ... )
+int		ft_printf(const char *format, ... )
 {
 	va_list ap;
 	t_prm prm;
